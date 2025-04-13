@@ -121,8 +121,8 @@ def main():
             #print(positions)
             #for a in ascii_rows:
              #   print(a)
-            t += 0.2  # Aktualizacja czasu
-            time.sleep(0.14)  # Frame time
+            t += 0.05  # Aktualizacja czasu
+            time.sleep(0.04)  # Frame time
     except KeyboardInterrupt:
         print("Przerwano przez użytkownika.")
 

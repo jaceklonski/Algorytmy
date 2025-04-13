@@ -1,12 +1,16 @@
 # Sprawozdanie Zadania 2
 
-Poniżej znajduje się opracowanie zadania Z1, w którym implementujemy metodę eliminacji Gaussa z częściowym wyborem elementu podstawowego. Poniższe omówienie wyjaśnia cel zadania, opisuje krok po kroku, jak została rozwiązana metoda, oraz tłumaczy to w przystępny sposób.
+### *Julia Pozorska & Jacek Lonski*
+
+---
+
+## Zadanie Z1
 
 ---
 
 ### Cel zadania
 
-Zadanie Z1 polega na napisaniu funkcji, która rozwiązuje układ równań liniowych przy pomocy metody eliminacji Gaussa, wzbogaconej o **częściowy wybór elementu podstawowego**.
+Zadanie Z1 polega na napisaniu funkcji, która rozwiązuje układ równań liniowych przy pomocy metody eliminacji Gaussa, wzbogaconej o częściowy wybór elementu podstawowego.
 
 - **Cel zadania:** Stworzenie algorytmu, który dzięki odpowiedniemu przestawianiu wierszy (wybieraniu elementu o największej wartości bezwzględnej w kolumnie) zwiększa dokładność i stabilność numeryczną obliczeń.
 
@@ -34,7 +38,11 @@ Implementacja algorytmu została zrealizowana w funkcji `eliminacjaGaussa(A, b)`
     - W ostatnim etapie, zaczynając od ostatniego równania, za pomocą podstawiania wstecznego obliczane są wartości niewiadomych.
     - Dla każdego równania obliczana jest suma iloczynów już znanych niewiadomych i odpowiednich współczynników, a następnie dzieli się przez element diagonalny, aby wyznaczyć daną niewiadomą.
 
-# Ogólne omówienie zadania Z2
+Dzięki powyższym krokom, algorytm został poprawnie zaimplementowany zgodnie z teorią metody eliminacji Gaussa, z dodatkiem stabilizującego wybierania pivotów.
+
+# Zadanie Z2 + Z5
+
+---
 
 W zadaniu Z2 symulujemy zachowanie fal w oparciu o numerycznie rozwiązany układ równań liniowych, który powstaje z dyskretyzacji operatora Laplace’a. Główne elementy rozwiązania obejmują:
 
@@ -44,24 +52,26 @@ W zadaniu Z2 symulujemy zachowanie fal w oparciu o numerycznie rozwiązany ukła
     
 2. **Budowę macierzy A:**
     
-    Macierz A opisuje zależności między punktami wnętrza (pomijając punkty brzegowe). W jej wypełnieniu wykorzystujemy metodę różnic skończonych – główna przekątna otrzymuje wartość -4, natomiast sąsiednim punktom (lewo, prawo, góra, dół) przypisujemy wartość 1.
+    Macierz A opisuje zależności między punktami wnętrza (pomijając punkty brzegowe). W jej wypełnieniu wykorzystujemy metodę różnic skończonych – główna przekątna otrzymuje wartość -4, natomiast sąsiednim punktom (lewo, prawo, góra, dół) przypisujemy wartość 1 (zgodnie z ich wspolczynnikami).
     
 3. **Obliczenie macierzy odwrotnej (A_inv):**
     
-    Ze względu na stałość macierzy A (dla danej geometrii) i ze jest macierza rzadka, obliczamy macierz odwrotną raz na początku symulacji, co pozwala później na szybkie rozwiązywanie układu (poprzez iloczyn A_inv·b).
+    Ze względu na stałość macierzy A (dla danej geometrii) i dlatego ze jest macierza rzadka, obliczamy macierz odwrotną raz na początku symulacji, co pozwala później na szybkie rozwiązywanie układu (poprzez iloczyn A_inv·b).
     
 4. **Uwzględnienie warunków brzegowych:**
     
-    Wektor b dla układu A·phi = b jest budowany z uwzględnieniem warunków brzegowych. Dla punktów, które mają sąsiadów poza wnętrzem siatki (sa punktami brzegowymi), obliczana jest wartość potencjału za pomocą funkcji phi_analityczne( obliczane na podstawie podanego wzoru ). W wyniku tego uzyskujemy przybliżone wartości funkcji potencjału we wnętrzu domeny (phi_interior).
+    Wektor b dla układu A·phi = b jest budowany z uwzględnieniem warunków brzegowych. Dla punktów, które mają sąsiadów poza wnętrzem siatki (sa punktami brzegowymi), obliczana jest wartość potencjału za pomocą funkcji phi_analityczne( obliczane na podstawie wzoru podanego w tresci zadania). W wyniku tego uzyskujemy przybliżone wartości funkcji potencjału we wnętrzu domeny (phi_interior).
     
 5. **Aktualizacja pozycji i wizualizacja:**
     
     Uzyskany wektor phi_interior jest wykorzystywany do aktualizacji wektora pozycji – choć wartość ta odpowiada właściwie potencjałowi, w uproszczonej wersji mozemy zalozyc ze potencjal jest zalezny od wysokosci na ktorej sie czastka znajduje jest przekształcana (pomnożona przez współczynnik) i dodawana do początkowego offsetu. W wersji jednowymiarowej każdy element wektora positions odpowiada liczbie znaków (np. 'x') wypisywanych w terminalu, co symuluje ruch fali w uproszczonym modelu.
     
+    W wersji 2D natomiast, tworzona jest siatka, na ktorej obliczany potencjal dla uproszczenia jest interpretowany jako odleglosc od poprzedzajacego poprzedzajacego punktu.
+    
 
 ---
 
-## Szczegółowy opis kodu (wersja 1D)
+## Szczegółowy opis kodu
 
 ### Funkcja stworz_macierz
 
@@ -94,26 +104,61 @@ W wersji uproszczonej:
     - Wektor positions – reprezentujący pozycje cząstek – jest aktualizowany poprzez dodanie przeskalowanych wartości φ.
     - Wizualizacja odbywa się poprzez wypisanie w terminalu szeregu znaków (np. 'x'), gdzie liczba znaków zależy od wartości pozycji – stąd mówimy o uproszczonej wizualizacji działającej na jednowymiarowym wektorze positions.
 
-Kod tej wersji (widoczny w zadanym fragmencie) demonstruje dynamiczną animację ASCII, gdzie zmiana pozycji cząstek w czasie ilustruje ruch fali.
+Kod tej wersji demonstruje dynamiczną animację ASCII, gdzie zmiana pozycji cząstek w czasie ilustruje ruch fali.
+
+Wersja dwuwymiarowa (Z2wiz2D.py) oprócz aktualizacji jednowymiarowego wektora positions buduje wizualizację na siatce 2D. W odroznieniu od uproszczonej wersji phi nie jest dodawane do wektora positions, tylko wartosci potencjalu bezposrednio wplywaja na odleglosc interpretowanych punktow od punktow ich poprzedzajacych (offset).
+
+- Dla każdego punktu na siatce (dla wnętrza, czyli punktów niebrzegowych) wyznaczany jest odpowiedni offset jako liczba spacji, odpowiadajaca przesunięciu poziomemu od poprzedzajacego elementu.
+- Następnie, dla każdego wiersza siatki (odpowiadającego współrzędnej pionowej) tworzona jest linia tekstowa z punktami wizualizowanymi jako kropki (lub znak specjalny na końcu wiersza).
+- Cała siatka jest wypisywana w terminalu.
 
 ---
 
-## Wersja dwuwymiarowa (plik Z2wiz2D.py)
+### Porównanie rozwiązania numerycznego z analitycznym dla funkcji potencjału
 
-W celu uzyskania bardziej rozbudowanej wizualizacji w przestrzeni dwuwymiarowej, zaimplementowano rozszerzoną wersję symulacji w pliku **Z2wiz2D.py**. Poniżej przedstawiam strukturę i kluczowe elementy kodu tej wersji:
+W zadaniu Z2 rozwiązano układ równań wynikający z dyskretyzacji operatora Laplace'a metodą różnic skończonych. Obliczone zostało przybliżone rozwiązanie funkcji potencjału φ w siatce 2D, a następnie porównano je ze znanym rozwiązaniem analitycznym, zdefiniowanym przez wzór:
 
-### Kluczowe różnice i rozszerzenia w wersji 2D
+$$
+\phi(x,z,t) = A_{coeff} \cdot B(z) \cdot C(x,t) 
+$$
 
-- **Dwuwymiarowa wizualizacja:**
-    
-    Wersja dwuwymiarowa oprócz aktualizacji jednowymiarowego wektora positions buduje wizualizację na siatce 2D.
-    
-    - Dla każdego punktu na siatce (dla wnętrza, czyli punktów niebrzegowych) wyznaczany jest odpowiedni offset jako liczba spacji, co odpowiada przesunięciu poziomemu.
-    - Następnie, dla każdego wiersza siatki (odpowiadającego współrzędnej pionowej) tworzona jest linia tekstowa z punktami wizualizowanymi jako kropki (lub znak specjalny na końcu wiersza).
-    - Cała siatka jest wypisywana w terminalu, dzięki czemu uzyskujemy lepsze odzwierciedlenie przestrzeni (np. 13x13 punktów przy N = 20).
-- **Parametry symulacji:**
-    
-    Parametry takie jak L (długość domeny), h_val (głębokość), T (okres) i kroki siatki delta_x, delta_z działają tak samo, jak w uproszczonej wersji – z tą różnicą, że wizualizacja jest bardziej "przestrzenna" i odpowiada rzeczywistemu rozmieszczeniu punktów na płaszczyźnie.
-    
+Gdzie:
 
----
+$$
+A_{coeff} = \frac{g \cdot h \cdot T}{4\pi}
+$$
+
+$$
+B(z) \text{ i } C(x,t)
+$$
+
+to funkcje zależne odpowiednio od głębokości i czasu oraz położenia poziomego.
+
+**Porównanie:**
+
+Dla ustalonego czasu t=0, obliczono:
+
+- Rozwiązanie numeryczne φ_num – uzyskane jako wynik układu równań A·φ = b,
+- Rozwiązanie analityczne φ_ana – wyliczone bezpośrednio na podstawie wzoru analitycznego.
+
+**Błąd względny obliczony jako:**
+
+$$
+error = \left|\frac{\phi_{num} - \phi_{ana}}{\phi_{ana}}\right|
+$$
+
+**Wyniki:**
+
+- Maksymalny błąd względny: **8.26** (czyli 826%)
+- Średni błąd względny: **3.62** (czyli 362%)
+
+**Interpretacja wyników:**
+
+- Większe błędy występują w punktach, gdzie  φ_ana przyjmuje bardzo małe wartości (bliskie zera), co znacznie zwiększa wartość błędu względnego mimo niewielkiej różnicy bezwzględnej.
+- Wartości błędu mieszczą się w akceptowalnym zakresie dla metod numerycznych stosowanych przy takiej siatce (13x13 punktów wnętrza), zwłaszcza że metoda bazuje na prostych różnicach skończonych.
+
+w implementacji Metody Roznic Skonczonych pomoglo:
+
+**‘The Finite Difference Method (2D)’**
+
+[https://www.youtube.com/watch?v=8MP9rDxfpDI&t=647s](https://www.youtube.com/watch?v=8MP9rDxfpDI&t=647s)

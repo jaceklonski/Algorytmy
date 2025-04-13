@@ -50,7 +50,46 @@ def stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, 
 
     return A_inv.dot(b) #rozwiazywanie macierzy AKA obliczanie nowego wektora zawierajacego aktualna wartosc phi dla kazdego punktu
 
+
+def porownaj_rozwiazania(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T):
+          
+        phi_num = stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T)
+
+        g = 9.81
+        A_coeff = (g * h_val * T) / (4 * np.pi)
+
+        def licz_B(z, h, L):
+            arg = 2 * np.pi / L
+            return (np.exp(arg * (z + h)) + np.exp(-arg * (z + h))) / (np.exp(arg * h) + np.exp(-arg * h))
+
+        def licz_C(x, t, L, T):
+            return np.sin(2 * np.pi * (x / L + t / T))
+
+        def phi_analityczne(x, z, t):
+            return A_coeff * licz_B(z, h_val, L) * licz_C(x, t, L, T)
+
+        num_vars = len(phi_num)
+        phi_ana = np.zeros(num_vars)
+        for k in range(num_vars):
+            i, j = var_to_coords[k]
+            x = i * delta_x
+            z = h_val + j * delta_z
+            phi_ana[k] = phi_analityczne(x, z, t)
+
+        error = np.abs((phi_num - phi_ana) / phi_num)
+        max_error = np.max(error)
+        mean_error = np.mean(error)
+
+        print("Porównanie rozwiązań dla t =", t)
+        print("Maksymalny błąd:", max_error)
+        print("Średni błąd:", mean_error)
+        return phi_num, phi_ana, error
+
 def main():
+
+
+
+
     # Parametry symulacji
     N = 15          # Liczba punktów w obu kierunkach (siatka NxN)
     L = 40.0        # Długość domeny w kierunku x
@@ -95,6 +134,8 @@ def main():
     phi_interior = stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T)
     positions = np.array(phi_interior) + 6000.0
 
+    phi_num, phi_ana, error = porownaj_rozwiazania(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T)
+    input()
 
     #glowna petla programu
     try:

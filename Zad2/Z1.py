@@ -29,7 +29,7 @@ def eliminacjaGaussa(A, b):
         b[i], b[pivot_row] = b[pivot_row], b[i]
 
         if abs(A[i][i]) < 1e-12:
-            raise ValueError("Macierz jest osobliwa lub prawie osobliwa")
+            raise ValueError("Zerowy pivot")
 
         wykonaj_eliminacje(i)
 
@@ -38,7 +38,7 @@ def eliminacjaGaussa(A, b):
         suma = b[i]
         for j in range(i+1, n):
             suma -= A[i][j] * x[j]
-        x[i] = suma / A[i][i]  # <- BEZ int()
+        x[i] = suma / A[i][i]
 
     return x
 
