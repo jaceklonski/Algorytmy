@@ -81,7 +81,6 @@ def main():
             if 1 <= ni <= Nx - 2 and 1 <= nj <= Nz - 2:
                 A[k, coords_to_var[(ni, nj)]] = 1
 
-    # Obliczenie macierzy odwrotnej – stała w całej symulacji
     A_inv = np.linalg.inv(A)
 
     # Inicjalizacja: t - czas startu,
@@ -98,7 +97,6 @@ def main():
 
             terminal_width = shutil.get_terminal_size().columns
 
-            # Budujemy wizualizację w układzie siatki 2D (wymiar: (Nx-2) x (Nz-2) czyli 13x13 punktów)
             ascii_rows = []
             # Pętla po wierszach (j - współrzędna pionowa); "kolumny symulacji" będą wypisywane jako wiersze terminala
             for j in range(1, Nz - 1):
@@ -109,7 +107,6 @@ def main():
                     pos = positions[k]
                     # Wyznaczamy poziomą przesunięcie jako liczbę spacji (skalujemy dzieląc przez 100)
                     offset = int((200 + pos)/100)
-                    # Każdy punkt reprezentowany jest jako " " * offset + "."
                     if i < Nx - 2:
                         cell = " " * offset + "."
                     else:
