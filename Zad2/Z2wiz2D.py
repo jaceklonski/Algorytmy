@@ -49,7 +49,7 @@ def stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, 
 
 def main():
     # Parametry symulacji
-    N = 20          # Liczba punktów w obu kierunkach (siatka NxN)
+    N = 30          # Liczba punktów w obu kierunkach (siatka NxN)
     L = 40.0        # Długość domeny w kierunku x
     h_val = 10.0    # Głębokość cieczy
     T = 5.0         # Okres fali
@@ -94,7 +94,7 @@ def main():
         while True:
             clear_terminal()
             phi_interior = stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T)
-            positions += phi_interior * 1.5  # Aktualizacja pozycji zgodnie z potencjałem
+            positions = phi_interior * 1.5  # Aktualizacja pozycji zgodnie z potencjałem
 
             terminal_width = shutil.get_terminal_size().columns
 
@@ -105,11 +105,10 @@ def main():
                 row_cells = []
                 # Pętla po kolumnach (i - współrzędna pozioma)
                 for i in range(1, Nx - 1):
-                    k = coords_to_var[(i, j)]
+                    k = coords_to_var[(j, Nx - (1 + i))]
                     pos = positions[k]
                     # Wyznaczamy poziomą przesunięcie jako liczbę spacji (skalujemy dzieląc przez 100)
-                    offset = int(pos / 700)
-                    offset = min(max(offset, 0), terminal_width - 1)
+                    offset = int((200 + pos)/100)
                     # Każdy punkt reprezentowany jest jako " " * offset + "."
                     if i < Nx - 2:
                         cell = " " * offset + "."
@@ -117,11 +116,14 @@ def main():
                         cell = " " * offset + "#"
                     row_cells.append(cell)
                 # Oddzielamy "kolumny" trzema spacjami – dzięki temu widoczny jest odstęp między punktami
-                ascii_rows.append(" ".join(row_cells))
+                ascii_rows.append("".join(row_cells))
             # Wypisujemy całą siatkę (każdy wiersz w terminalu)
             for line in ascii_rows:
                 print(line, flush=True)
-
+            
+            #print(positions)
+            #for a in ascii_rows:
+             #   print(a)
             t += 0.2  # Aktualizacja czasu
             time.sleep(0.14)  # Frame time
     except KeyboardInterrupt:
