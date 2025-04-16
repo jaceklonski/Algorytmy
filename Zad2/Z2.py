@@ -36,6 +36,8 @@ def stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, 
 
     #wektor rozwiazan (metoda reszt skonczonych)
     b = np.zeros(num_vars)
+    dx2 = delta_x ** 2
+    dz2 = delta_z ** 2
 
     for k in range(num_vars):
         i, j = var_to_coords[k]
@@ -44,11 +46,15 @@ def stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, 
             x = ni * delta_x
             z = h_val + nj * delta_z
             if not (1 <= ni <= N - 2 and 1 <= nj <= N - 2):
-                #obliczanie wartosci brzegowych z podanego wzoru
                 phi_brzeg = phi_analityczne(x, z, t)
-                b[k] -= phi_brzeg
-
-    return A_inv.dot(b) #rozwiazywanie macierzy AKA obliczanie nowego wektora zawierajacego aktualna wartosc phi dla kazdego punktu
+                # Określ kierunek sąsiada i współczynnik
+                if ni != i:  # Sąsiad w kierunku x
+                    coeff = 1 / dx2
+                else:         # Sąsiad w kierunku z
+                    coeff = 1 / dz2
+                b[k] -= coeff * phi_brzeg
+    
+    return np.linalg.solve(A_inv, b) #rozwiazywanie macierzy AKA obliczanie nowego wektora zawierajacego aktualna wartosc phi dla kazdego punktu
 
 
 def porownaj_rozwiazania(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T):
@@ -76,89 +82,77 @@ def porownaj_rozwiazania(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_
             z = h_val + j * delta_z
             phi_ana[k] = phi_analityczne(x, z, t)
 
-        error = np.abs((phi_num - phi_ana) / phi_num)
+        error = np.abs(phi_num - phi_ana)
+        
+        # Obliczanie błędu procentowego z zabezpieczeniem przed dzieleniem przez zero
+        epsilon = 1e-12
+        error_percent = 100 * np.abs((phi_num - phi_ana) / (np.abs(phi_ana) + epsilon))
+        
         max_error = np.max(error)
+        max_percent = np.max(error_percent)
         mean_error = np.mean(error)
+        mean_percent = np.mean(error_percent)
 
-        print("Porównanie rozwiązań dla t =", t)
-        print("Maksymalny błąd:", max_error)
-        print("Średni błąd:", mean_error)
+        print("Dla N =", N)
+        print(f"Maksymalny błąd bezwzględny: {max_error:.4e} | procentowy: {max_percent:.2f}%")
+        print(f"Średni błąd bezwzględny: {mean_error:.4e} | procentowy: {mean_percent:.2f}%\n")
+        
         return phi_num, phi_ana, error
 
 def main():
-
-
-
-
     # Parametry symulacji
-    N = 15          # Liczba punktów w obu kierunkach (siatka NxN)
-    L = 40.0        # Długość domeny w kierunku x
-    h_val = 10.0    # Głębokość cieczy
-    T = 5.0         # okres fali
+
+    print("Porównanie rozwiązań dla t =", 0.0)
+    for N in range(15, 40):# Liczba punktów w obu kierunkach (siatka NxN)
+        L = 40.0        # Długość domeny w kierunku x
+        h_val = 10.0    # Głębokość cieczy
+        T = 5.0         # okres fali
     
-    #na ile krokow dzielimy siatke
-    Nx = Nz = N
-    delta_x = L / (Nx - 1)
-    delta_z = -h_val / (Nz - 1)
+        #na ile krokow dzielimy siatke
+        Nx = Nz = N
+        delta_x = L / (Nx - 1)
+        delta_z = h_val / (Nz - 1)
     
     # Liczba punktów wnętrza – patrz Metoda Skonczonych roznic
-    num_vars = (Nx - 2) * (Nz - 2)
+        num_vars = (Nx - 2) * (Nz - 2)
 
     # Budujemy macierz A dla roznic skonczonych
-    A = np.zeros((num_vars, num_vars)) #AKA dyskretyzacja operatora Laplace'a
-    var_to_coords = {}
-    coords_to_var = {}
-    idx = 0
-    for j in range(1, Nz - 1):
-        for i in range(1, Nx - 1):
-            var_to_coords[idx] = (i, j)
-            coords_to_var[(i, j)] = idx
-            idx += 1
+        A = np.zeros((num_vars, num_vars)) #AKA dyskretyzacja operatora Laplace'a
+        var_to_coords = {}
+        coords_to_var = {}
+        idx = 0
+        for j in range(1, Nz - 1):
+            for i in range(1, Nx - 1):
+                var_to_coords[idx] = (i, j)
+                coords_to_var[(i, j)] = idx
+                idx += 1
 
 
     # Wypelnianie tablicy zaleznosciami punktow miedzy soba
-    for k in range(num_vars):
-        i, j = var_to_coords[k]
-        A[k, k] = -4
-        neighbors = [(i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)]
-        for ni, nj in neighbors:
-            if 1 <= ni <= Nx - 2 and 1 <= nj <= Nz - 2:
-                A[k, coords_to_var[(ni, nj)]] = 1
-    
+        dx2 = delta_x ** 2
+        dz2 = delta_z ** 2
+
+# Wypełnianie macierzy A – dyskretyzacja operatora Laplace’a z różnym dx i dz
+        for k in range(num_vars):
+            i, j = var_to_coords[k]
+            A[k, k] = -2 * (1/dx2 + 1/dz2)  # element centralny
+
+            neighbors = [(i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)]
+            for ni, nj in neighbors:
+                if 1 <= ni <= Nx - 2 and 1 <= nj <= Nz - 2:
+                    neighbor_idx = coords_to_var[(ni, nj)]
+                    if ni != i:
+                        A[k, neighbor_idx] = 1/dx2  # Poprawiony współczynnik dla X
+                    elif nj != j:
+                        A[k, neighbor_idx] = 1/dz2  # Poprawiony współczynnik dla Z# sąsiad w pionie   
     #macierz odwrotna dodana inicjowana tutaj w celu optymalizacji, gdyz stosunki miedzy punktami sie nie zmieniaja w zaleznosci od czasu
-    A_inv = np.linalg.inv(A) #odwrotna dlatego, ze A^(-1) * b = phi
+        A_inv = np.linalg.inv(A) #odwrotna dlatego, ze A^(-1) * b = phi
 
 
     #Inicjalizacja fali t - czas startu, phi_interior > positions - pozycja startowa czastek fali,
-    t = 0.0
-    phi_interior = stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T)
-    positions = np.array(phi_interior) + 6000.0
-
-    phi_num, phi_ana, error = porownaj_rozwiazania(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T)
-    input()
-
-    #glowna petla programu
-    try:
-        while True:
-            clear_terminal()
-            phi_interior = stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T)
-            #print(phi_interior)
-            positions += phi_interior * 1.5 # 1.5 - wspolczynnik wysokosci fali
-
-            terminal_width = shutil.get_terminal_size().columns
-            
-            #Wizualizacja jest uproszczona i edytuje jednowymiarowy wektor positions, gdzie kazda wartossc reprezentuje liczba znakow x
-            #
-            #glowna petla animacji ASCII
-            for pos in positions:
-                num_chars = int(pos / 100)  # /100 - skala symulacji
-                line = 'x' * min(max(num_chars, 0), terminal_width) #zabezpieczenie, zeby nie przesadzilo z iloscia 'x'
-                print(line, flush=True)
-
-            t += 0.2 #interwal czasu miedzy generowanymi wartosciami
-            time.sleep(0.14) #frame-time
-    except KeyboardInterrupt:
-        print("Przerwano przez użytkownika.")
-
+        t = 0.0
+        phi_interior = stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T)
+        phi_num, phi_ana, error = porownaj_rozwiazania(t, A, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T)
+ 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,6 @@ import numpy as np
 import time
 import os
 import shutil
-import math
 
 def clear_terminal():
     print('\033[2J\033[H', end='')
@@ -11,13 +10,13 @@ def stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, 
     """
     Parametry:
       - t: czas,
-      - A_inv:macierz odwrotna do macierzy uzywanej w stworz macierz,
-      - var_to_coords, coords_to_var: mapowanie danych,
+      - A_inv: macierz odwrotna do macierzy używanej w stworz_macierz,
+      - var_to_coords, coords_to_var: mapowanie zmiennych do współrzędnych,
       - delta_x, delta_z: kroki siatki w kierunkach x i z,
-      - N: liczba punktów podzialu każdym kierunku,
+      - N: liczba punktów podziału w każdym kierunku,
       - L: długość fali,
       - h_val: głębokość cieczy,
-      - T: okres,
+      - T: okres.
     """
     g = 9.81
     A_coeff = (g * h_val * T) / (4 * np.pi)
@@ -33,8 +32,6 @@ def stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, 
         return A_coeff * licz_B(z, h_val, L) * licz_C(x, t, L, T)
 
     num_vars = A_inv.shape[0]
-
-    #wektor rozwiazan (metoda reszt skonczonych)
     b = np.zeros(num_vars)
 
     for k in range(num_vars):
@@ -44,20 +41,18 @@ def stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, 
             x = ni * delta_x
             z = h_val + nj * delta_z
             if not (1 <= ni <= N - 2 and 1 <= nj <= N - 2):
-                #obliczanie wartosci brzegowych z podanego wzoru
                 phi_brzeg = phi_analityczne(x, z, t)
                 b[k] -= phi_brzeg
 
-    return A_inv.dot(b) #rozwiazywanie macierzy AKA obliczanie nowego wektora zawierajacego aktualna wartosc phi dla kazdego punktu
-
-
+    # Rozwiązujemy układ: A * phi = b
+    return A_inv.dot(b)
 
 def main():
     # Parametry symulacji
-    N = 30          # Liczba punktów w obu kierunkach (siatka NxN)
+    N = 10          # Liczba punktów w obu kierunkach (siatka NxN)
     L = 40.0        # Długość domeny w kierunku x
     h_val = 10.0    # Głębokość cieczy
-    T = h_val/2         # Okres fali
+    T = 5.0         # Okres fali
 
     Nx = Nz = N
     delta_x = L / (Nx - 1)
@@ -88,10 +83,8 @@ def main():
 
     A_inv = np.linalg.inv(A)
 
-
     # Inicjalizacja: t - czas startu,
     # phi_interior > rozwiązanie dla punktów wnętrza, positions > pozycje cząstek z pewnym offsetem (bazowym przesunięciem)
-
     t = 0.0
     phi_interior = stworz_macierz(t, A_inv, var_to_coords, coords_to_var, delta_x, delta_z, N, L, h_val, T)
     positions = []
@@ -110,27 +103,21 @@ def main():
                 row_cells = []
                 # Pętla po kolumnach (i - współrzędna pozioma)
                 for i in range(1, Nx - 1):
-                    k = coords_to_var[j, (Nx - (1 + i))]
+                    k = coords_to_var[(j, Nx - (1 + i))]
                     pos = positions[k]
                     # Wyznaczamy poziomą przesunięcie jako liczbę spacji (skalujemy dzieląc przez 100)
-                    offset = int((200 + pos)/100)
-                    if i < Nx - 2:
-                        cell = " " * offset + "."
-                    else:
-                        cell = " " * offset + "#"
+                    offset = int(pos/100)
+                    cell = offset
                     row_cells.append(cell)
+
+                ascii_rows.append(row_cells)
                 # Oddzielamy "kolumny" trzema spacjami – dzięki temu widoczny jest odstęp między punktami
-                ascii_rows.append("".join(row_cells))
             # Wypisujemy całą siatkę (każdy wiersz w terminalu)
-            for line in ascii_rows:
-                print(line, flush=True)
-            
             #print(positions)
-            #for a in ascii_rows:
-             #   print(a)
-            print(t)
-            t += 0.1 # Aktualizacja czasu
-            time.sleep(0.1)  # Frame time
+            for a in ascii_rows:
+                print(a)
+            t += 0.05  # Aktualizacja czasu
+            time.sleep(0.5)  # Frame time
     except KeyboardInterrupt:
         print("Przerwano przez użytkownika.")
 

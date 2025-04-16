@@ -42,3 +42,30 @@ def eliminacjaGaussa(A, b):
 
     return x
 
+
+def weryfikuj_rozwiazanie(A, b, x, tol=1e-9):
+    n = len(A)
+    for i in range(n):
+        suma = 0
+        for j in range(n):
+            suma += A[i][j] * x[j]
+        if abs(suma - b[i]) > tol:
+            return False
+    return True
+
+# Przykładowe dane testowe:
+A_test = [
+    [2, 1, -1],
+    [-3, -1, 2],
+    [-2, 1, 2]
+]
+b_test = [8, -11, -3]
+
+# Użycie funkcji eliminacjiGaussa:
+x_test = eliminacjaGaussa(A_test, b_test)
+
+# Weryfikacja rozwiązania:
+if weryfikuj_rozwiazanie(A_test, b_test, x_test):
+    print("Rozwiązanie jest poprawne:", x_test)
+else:
+    print("Błąd w rozwiązaniu!")
